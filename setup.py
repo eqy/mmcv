@@ -179,7 +179,10 @@ def get_extensions():
         define_macros += [('MMCV_WITH_CUDA', None)]
         define_macros += [('MMCV_WITH_TRT', None)]
         cuda_args = os.getenv('MMCV_CUDA_ARGS')
-        extra_compile_args['nvcc'] = [cuda_args] if cuda_args else []
+        if cuda_args:
+            extra_compile_args['nvcc'].extend(cuda_args.split())
+        else:
+            extra_compile_args['nvcc'] = []
         # prevent cub/thrust conflict with other python library
         # More context See issues #1454
         extra_compile_args['nvcc'] += ['-Xcompiler=-fno-gnu-unique']
@@ -215,9 +218,11 @@ def get_extensions():
         include_dirs.append(os.path.abspath('./mmcv/ops/csrc/common/cuda'))
         cuda_args = os.getenv('MMCV_CUDA_ARGS')
         extra_compile_args = {
-            'nvcc': [cuda_args, '-std=c++14'] if cuda_args else ['-std=c++14'],
-            'cxx': ['-std=c++14'],
+            'nvcc': ['-std=c++17'],
+            'cxx': ['-std=c++17'],
         }
+        if cuda_args:
+            extra_compile_args['nvcc'] = cuda_args.split()
         if torch.cuda.is_available() or os.getenv('FORCE_CUDA', '0') == '1':
             define_macros += [('MMCV_WITH_CUDA', None)]
             extra_compile_args['nvcc'] += [
@@ -258,14 +263,14 @@ def get_extensions():
         extra_compile_args = {'cxx': []}
 
         # Since the PR (https://github.com/open-mmlab/mmcv/pull/1463) uses
-        # c++14 features, the argument ['std=c++14'] must be added here.
+        # c++17 features, the argument ['std=c++17'] must be added here.
         # However, in the windows environment, some standard libraries
         # will depend on c++17 or higher. In fact, for the windows
         # environment, the compiler will choose the appropriate compiler
         # to compile those cpp files, so there is no need to add the
         # argument
         if platform.system() != 'Windows':
-            extra_compile_args['cxx'] = ['-std=c++14']
+            extra_compile_args['cxx'] = ['-std=c++17']
 
         include_dirs = []
 
@@ -283,7 +288,11 @@ def get_extensions():
                 define_macros += [('MMCV_WITH_HIP', None)]
             define_macros += [('MMCV_WITH_CUDA', None)]
             cuda_args = os.getenv('MMCV_CUDA_ARGS')
-            extra_compile_args['nvcc'] = [cuda_args] if cuda_args else []
+            extra_compile_args['nvcc'] = []
+            if cuda_args:
+                extra_compile_args['nvcc'].extend(cuda_args.split())
+                
+
             op_files = glob.glob('./mmcv/ops/csrc/pytorch/*.cpp') + \
                 glob.glob('./mmcv/ops/csrc/pytorch/cpu/*.cpp') + \
                 glob.glob('./mmcv/ops/csrc/pytorch/cuda/*.cu') + \
@@ -338,14 +347,14 @@ def get_extensions():
             include_dirs.append(os.path.abspath('./mmcv/ops/csrc/common'))
 
         # Since the PR (https://github.com/open-mmlab/mmcv/pull/1463) uses
-        # c++14 features, the argument ['std=c++14'] must be added here.
+        # c++17 features, the argument ['std=c++17'] must be added here.
         # However, in the windows environment, some standard libraries
         # will depend on c++17 or higher. In fact, for the windows
         # environment, the compiler will choose the appropriate compiler
         # to compile those cpp files, so there is no need to add the
         # argument
         if 'nvcc' in extra_compile_args and platform.system() != 'Windows':
-            extra_compile_args['nvcc'] += ['-std=c++14']
+            extra_compile_args['nvcc'] += ['-std=c++17']
 
         ext_ops = extension(
             name=ext_name,
@@ -391,7 +400,10 @@ def get_extensions():
                                                           '0') == '1':
             define_macros += [('MMCV_WITH_CUDA', None)]
             cuda_args = os.getenv('MMCV_CUDA_ARGS')
-            extra_compile_args['nvcc'] = [cuda_args] if cuda_args else []
+            if cuda_args:
+                extra_compile_args['nvcc'].extend(cuda_args.split())
+            else:
+                extra_compile_args['nvcc'] = []
             op_files += glob.glob('./mmcv/ops/csrc/onnxruntime/gpu/*')
             include_dirs += include_paths(cuda=True)
             library_dirs += library_paths(cuda=True)
